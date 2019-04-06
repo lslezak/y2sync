@@ -8,17 +8,17 @@ module Y2sync
   # FIXME: more branches
   IGNORED_REPOS = {
     # FIXME
-    "SLE-12-GA" => [],
+    "SLE-12-GA"  => [],
     "SLE-12-SP1" => [],
     "SLE-12-SP2" => [],
     "SLE-12-SP3" => [],
     "SLE-12-SP4" => [],
-    "SLE-15-GA" => [],
+    "SLE-15-GA"  => [],
     "SLE-15-SP1" => [],
     "SLE-15-SP2" => [],
     "SLE-15-SP3" => [],
     "SLE-15-SP4" => [],
-    "master" => [
+    "master"     => [
       "skelcd-control-SLES-for-VMware",
       "rubygem-scc_api",
       "yast-autofs",
@@ -88,9 +88,8 @@ module Y2sync
       "y2r",
       "travis_old"
     ]
-  }
+  }.freeze
 end
-
 
 options = Y2sync::Options.instance
 puts "options: #{options.inspect}"
@@ -100,15 +99,17 @@ logger = Y2sync::Logger.new($stdout)
 config = Y2sync::Config.read
 puts "config: #{config.inspect}"
 
-if options.command.nil?
-  options.command = config.file.nil? ? "clone" : "refresh"
-end
+options.command = config.file.nil? ? "clone" : "refresh" if options.command.nil?
 
 case options.command
 when "clone"
   puts "Cloning all repositories..."
-  puts Y2sync::Repo.all.inspect
-  #config.write
+  repos = Y2sync::Repo.all
+
+  puts repos.map { |r| r.repo.name }.inspect
+  Y2sync::Repo.sync_all(repos)
+
+  # config.write
 when "refresh"
   puts "Refreshing the current repositories..."
 when "update"

@@ -1,11 +1,14 @@
 
 require "octokit"
+require "parallel"
 require "shellwords"
+require "English"
 
 module Y2sync
   class Repo
+    TARGET_BRANCH = "master".freeze
+
     def self.all
-      
       # use ~/.netrc ?
       netrc = File.join(Dir.home, ".netrc")
       client_options = if ENV["GH_TOKEN"]
@@ -17,12 +20,12 @@ module Y2sync
       else
         {}
       end
-      
+
       client = Octokit::Client.new(client_options)
       client.auto_paginate = true
 
       # TODO: add option for other organizations
-      client.list_repositories("yast").map(&:name).sort
+      client.list_repositories("yast").map { |r| Repo.new(r) }
     end
 
     def self.branch(branch)
@@ -42,21 +45,28 @@ module Y2sync
 
     def dir
       # remove the "yast-" prefix, make searching in the directory easier
-      repo.name(/^yast-/, "")
+      repo.name.gsub(/^yast-/, "")
+    end
+
+    def target_dir
+      File.join(Y2sync::Options.instance.dir, dir)
     end
 
     def clone_repo
-      cmd = "git clone -b #{Shellwords.escape(TARGET_BRANCH)} " \
-        "#{Shellwords.escape(repo.git_url)} #{Shellwords.escape(dir)}"
+      # FIXME: read the stderr
+      cmd = "git clone --quiet --branch #{Shellwords.escape(TARGET_BRANCH)} " \
+      "#{Shellwords.escape(repo.git_url)} #{Shellwords.escape(target_dir)} > /dev/null 2> /dev/null"
 
-      `#{cmd}`
+      # `#{cmd}`
+
+      sleep(rand)
 
       # FIXME: collect errors?
-      SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: live?)
+      SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: true)
     end
 
     def update_repo
-      Dir.cwd(dir) do
+      Dir.chdir(dir) do
         # stash - make sure any unsubmitted work is not lost by accident
         # reset - ensure consistent state
         # prune - remove the branches which were deleted on the server
@@ -84,7 +94,7 @@ module Y2sync
 
     def files
       # remove the self and parent directory entries
-      Dir.entries(dir) - [".", ".."]
+      Dir.entries(target_dir) - [".", ".."]
     end
 
     # the dead repositories only contain README.md file
