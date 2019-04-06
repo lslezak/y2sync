@@ -33,7 +33,8 @@ module Y2sync
     end
 
     def self.sync_all(repos)
-      Parallel.map(repos, progress: "Progress", &:sync)
+      # TODO limit the initial cloning to 4 processes?
+      Parallel.map(repos, progress: "Synchronizing...", &:sync)
     end
 
     # octokit info
@@ -55,35 +56,32 @@ module Y2sync
     def clone_repo
       # FIXME: read the stderr
       cmd = "git clone --quiet --branch #{Shellwords.escape(TARGET_BRANCH)} " \
-      "#{Shellwords.escape(repo.git_url)} #{Shellwords.escape(target_dir)} > /dev/null 2> /dev/null"
+      "#{Shellwords.escape(repo.git_url)} #{Shellwords.escape(target_dir)}"
 
-      # `#{cmd}`
-
-      sleep(rand)
+      `#{cmd}`
 
       # FIXME: collect errors?
       SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: true)
     end
 
     def update_repo
-      Dir.chdir(dir) do
-        # stash - make sure any unsubmitted work is not lost by accident
-        # reset - ensure consistent state
-        # prune - remove the branches which were deleted on the server
-        # checkout - ensure the requested branch is set
-        # pull - update from origin with rebase
-        # TODO: optionally gc
-        cmd = "git stash save && git reset --hard && git fetch --prune && " \
-          "git checkout -q #{Shellwords.escape(TARGET_BRANCH)} && git pull --rebase"
-        `#{cmd}`
+      # stash - make sure any unsubmitted work is not lost by accident
+      # reset - ensure consistent state
+      # prune - remove the branches which were deleted on the server
+      # checkout - ensure the requested branch is set
+      # pull - update from origin with rebase
+      # TODO: optionally gc
+      cmd = "cd #{Shellwords.escape(target_dir)} && git stash save && git reset --hard && git fetch --prune && " \
+        "git checkout -q #{Shellwords.escape(TARGET_BRANCH)} && git pull --rebase"
 
-        return SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: live?)
-      end
+      `#{cmd}`
+
+      return SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: live?)
     end
 
     def sync
       # clone or update the existing checkout
-      if File.exist?(dir)
+      if File.exist?(target_dir)
         update_repo
       else
         clone_repo

@@ -1,10 +1,10 @@
 module Y2sync
   # Contains gemfile version
   module Version
-    STRING = "0.0.1".freeze
+    MAJOR = 0
+    MINOR = 0
+    PATCH = 1
 
-    def self.version
-      STRING
-    end
+    STRING = "#{MAJOR}.#{MINOR}.#{PATCH}".freeze
   end
 end
