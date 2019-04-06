@@ -1,0 +1,5 @@
+require "y2sync/config.rb"
+require "y2sync/logger.rb"
+require "y2sync/options.rb"
+require "y2sync/repo.rb"
+require "y2sync/sync_result.rb"

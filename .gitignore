@@ -1,0 +1,7 @@
+.bundle
+.vendor
+.yardoc
+.rubocop-*-yml
+Gemfile.lock
+coverage/
+pkg/

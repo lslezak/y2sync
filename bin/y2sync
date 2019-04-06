@@ -1,0 +1,117 @@
+#! /usr/bin/env ruby
+
+$LOAD_PATH.unshift("#{__dir__}/../lib")
+
+require "y2sync"
+
+module Y2sync
+  # FIXME: more branches
+  IGNORED_REPOS = {
+    # FIXME
+    "SLE-12-GA" => [],
+    "SLE-12-SP1" => [],
+    "SLE-12-SP2" => [],
+    "SLE-12-SP3" => [],
+    "SLE-12-SP4" => [],
+    "SLE-15-GA" => [],
+    "SLE-15-SP1" => [],
+    "SLE-15-SP2" => [],
+    "SLE-15-SP3" => [],
+    "SLE-15-SP4" => [],
+    "master" => [
+      "skelcd-control-SLES-for-VMware",
+      "rubygem-scc_api",
+      "yast-autofs",
+      "yast-backup",
+      "yast-bluetooth",
+      "yast-boot-server",
+      "yast-cd-creator",
+      "yast-certify",
+      "yast-cim",
+      "yast-databackup",
+      "yast-dbus-client",
+      "yast-debugger",
+      "yast-dialup",
+      "yast-dirinstall",
+      "yast-fax-server",
+      "yast-fingerprint-reader",
+      "yast-heartbeat",
+      "yast-hpc",
+      "yast-ipsec",
+      "yast-irda",
+      "yast-iscsi-server",
+      "yast-kerberos-client",
+      "yast-kerberos-server",
+      "yast-liby2util",
+      "yast-live-installer",
+      "yast-ldap-client",
+      "yast-ldap-server",
+      "yast-lxc",
+      "yast-meta",
+      "yast-mouse",
+      "yast-mail-server",
+      "yast-mysql-server",
+      "yast-ntsutils",
+      "yast-oem-installation",
+      "yast-online-update-test",
+      "yast-openschool",
+      "yast-openteam",
+      "yast-openvas-security-scanner",
+      "yast-openwsman-yast",
+      "yast-packagemanager",
+      "yast-packagemanager-test",
+      "yast-phone-services",
+      "yast-power-management",
+      "yast-profile-manager",
+      "yast-repair",
+      "yast-restore",
+      "yast-runlevel",
+      "yast-squidguard",
+      "yast-sshd",
+      "yast-sudo",
+      "yast-support",
+      "yast-system-profile",
+      "yast-system-update",
+      "yast-slepos-image-builder",
+      "yast-slepos-system-manager",
+      "yast-slide-show",
+      "yast-tv",
+      "yast-ui-qt-tests",
+      "yast-update-alternatives",
+      "yast-uml",
+      "yast-wagon",
+      "yast-you-server",
+      "yast-yxmlconv",
+      "yast-y2pmsh",
+      "yast-y2r-tools",
+      "ycp-killer",
+      "y2r",
+      "travis_old"
+    ]
+  }
+end
+
+
+options = Y2sync::Options.instance
+puts "options: #{options.inspect}"
+
+logger = Y2sync::Logger.new($stdout)
+
+config = Y2sync::Config.read
+puts "config: #{config.inspect}"
+
+if options.command.nil?
+  options.command = config.file.nil? ? "clone" : "refresh"
+end
+
+case options.command
+when "clone"
+  puts "Cloning all repositories..."
+  puts Y2sync::Repo.all.inspect
+  #config.write
+when "refresh"
+  puts "Refreshing the current repositories..."
+when "update"
+  puts "Updating the current checkout..."
+end
+puts "options: #{options.inspect}"
