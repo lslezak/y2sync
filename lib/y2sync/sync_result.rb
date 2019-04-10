@@ -1,5 +1,6 @@
 
 module Y2sync
+  # Synchronization result
   class SyncResult
     attr_reader :success
     attr_reader :empty_repo

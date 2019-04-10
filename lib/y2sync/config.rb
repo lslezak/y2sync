@@ -1,6 +1,7 @@
 require "yaml"
 
 module Y2sync
+  # Configuration file
   class Config
     FILE_NAME = ".y2sync.yml".freeze
 

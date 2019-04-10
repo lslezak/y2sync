@@ -5,10 +5,11 @@ require "shellwords"
 require "English"
 
 module Y2sync
+  # GitHub repository
   class Repo
     TARGET_BRANCH = "master".freeze
 
-    def self.all
+    def self.all(organization)
       # use ~/.netrc ?
       netrc = File.join(Dir.home, ".netrc")
       client_options = if ENV["GH_TOKEN"]
@@ -24,8 +25,7 @@ module Y2sync
       client = Octokit::Client.new(client_options)
       client.auto_paginate = true
 
-      # TODO: add option for other organizations
-      client.list_repositories("yast").map { |r| Repo.new(r) }
+      client.list_repositories(organization).map { |r| Repo.new(r) }
     end
 
     def self.branch(branch)
@@ -33,7 +33,7 @@ module Y2sync
     end
 
     def self.sync_all(repos)
-      # TODO limit the initial cloning to 4 processes?
+      # TODO: limit the initial cloning to 4 processes?
       Parallel.map(repos, progress: "Synchronizing...", &:sync)
     end
 
@@ -71,12 +71,13 @@ module Y2sync
       # checkout - ensure the requested branch is set
       # pull - update from origin with rebase
       # TODO: optionally gc
-      cmd = "cd #{Shellwords.escape(target_dir)} && git stash save && git reset --hard && git fetch --prune && " \
-        "git checkout -q #{Shellwords.escape(TARGET_BRANCH)} && git pull --rebase"
+      cmd = "cd #{Shellwords.escape(target_dir)} && git stash save && git reset --hard && " \
+        "git fetch --prune && git checkout -q #{Shellwords.escape(TARGET_BRANCH)} && " \
+        "git pull --rebase"
 
       `#{cmd}`
 
-      return SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: live?)
+      SyncResult.new(success: $CHILD_STATUS.success?, empty_repo: live?)
     end
 
     def sync

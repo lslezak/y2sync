@@ -92,22 +92,34 @@ module Y2sync
 end
 
 options = Y2sync::Options.instance
-puts "options: #{options.inspect}"
 
 logger = Y2sync::Logger.new($stdout)
+logger.level = Logger::DEBUG if options.debug
+
+logger.debug "-" * 60
+logger.debug "Starting #{$PROGRAM_NAME}"
+logger.debug { "options: #{options.inspect}" }
 
 config = Y2sync::Config.read
-puts "config: #{config.inspect}"
+logger.debug { "config: #{config.inspect}" }
 
 options.command = config.file.nil? ? "clone" : "refresh" if options.command.nil?
 
 case options.command
 when "clone"
-  puts "Cloning all repositories..."
-  repos = Y2sync::Repo.all
+  puts "Reading all #{options.org} repositories..."
+  repos = Y2sync::Repo.all(options.org)
+  logger.debug { "Github repositories: #{repos.map { |r| r.repo.name }.inspect}" }
 
-  puts repos.map { |r| r.repo.name }.inspect
-  Y2sync::Repo.sync_all(repos)
+  puts "Found #{repos.size} repositories"
+  results = Y2sync::Repo.sync_all(repos)
+  logger.debug { "Results: #{results}" }
+
+  # report the summary to the user
+  summary = Y2sync::Results.new(results)
+  summary.print
+
+  exit 1 if results.any? { |r| !r.success }
 
   # config.write
 when "refresh"
@@ -115,4 +127,3 @@ when "refresh"
 when "update"
   puts "Updating the current checkout..."
 end
-puts "options: #{options.inspect}"
